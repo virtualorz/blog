@@ -133,6 +133,16 @@ class Blog
                         'creat_admin_id' => Request::input('blog-creat_admin_id', null),
                         'update_admin_id' => Request::input('blog-update_admin_id', null),
                     ]);
+
+                foreach (Request::input('blog-tag', []) as $k => $v) {
+                    DB::table('blog_tag')
+                        ->insert([
+                            'blog_id' => $insert_id,
+                            'tag_id' => $v,
+                            'creat_admin_id' => Request::input('blog-creat_admin_id', null),
+                            'update_admin_id' => Request::input('blog-update_admin_id', null),
+                        ]);
+                }
                 
                 foreach (Request::input('blog-lang', []) as $k => $v) {
                     DB::table('blog_lang')
@@ -237,6 +247,28 @@ class Blog
                         'enable' => Request::input('blog-enable'),
                         'update_admin_id' => Request::input('blog-update_admin_id', null),
                     ]);
+                DB::table('blog_tag')
+                    ->where('blog_id',Request::input('id'))
+                    ->whereNotIn('tag_id',Request::input('blog-tag', []))
+                    ->delete();
+                
+                foreach (Request::input('blog-tag', []) as $k => $v) {
+                    $dataCount = DB::table('blog_tag')
+                        ->where('blog_id',Request::input('id'))
+                        ->where('tag_id',$v)
+                        ->count();
+                    if($dataCount == 0)
+                    {
+                        DB::table('blog_tag')
+                            ->insert([
+                                'blog_id' => Request::input('id'),
+                                'tag_id' => $v,
+                                'creat_admin_id' => Request::input('blog-creat_admin_id', null),
+                                'update_admin_id' => Request::input('blog-update_admin_id', null),
+                            ]);
+                    }
+                }
+
                 foreach (Request::input('blog-lang', []) as $k => $v) {
                     $dataRow_lang_before = DB::table('blog_lang')
                         ->select([
@@ -315,6 +347,14 @@ class Blog
                 ->whereNull('blog.delete')
                 ->first();
             if ($dataRow_blog != null) {
+                $dataSet_tag = DB::table('blog_tag')
+                    ->select([
+                        'blog_tag.tag_id',
+                        'tag.name'
+                    ])
+                    ->leftJoin('tag','blog_tag.tag_id','=','tag.id')
+                    ->where('blog_tag.blog_id',$dataRow_blog->id)
+                    ->get();
                 $dataSet_lang = DB::table('blog_lang')
                     ->select([
                         'blog_lang.lang',
@@ -336,6 +376,7 @@ class Blog
                     $dataSet_lang[$k]->files_link = head(Fileupload::getFiles($v->files));
                     $dataSet_lang[$k]->content_obj = json_decode($v->content, true);
                 }
+                $dataRow_blog->tag = $dataSet_tag;
                 $dataRow_blog->lang = $dataSet_lang;
                 $dataRow_blog->photo_link = head(Fileupload::getFiles($dataRow_blog->photo));
                 $dataRow_blog->files_link = head(Fileupload::getFiles($dataRow_blog->files));
