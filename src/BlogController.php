@@ -150,7 +150,13 @@ class Blog
                             'creat_admin_id' => Request::input('blog-creat_admin_id', null),
                             'update_admin_id' => Request::input('blog-update_admin_id', null),
                         ]);
+                    Fileupload::handleFile((isset($v['blog-photo'])) ? $v['blog-photo'] : '[]');
+                    Fileupload::handleFile((isset($v['blog-files'])) ? $v['blog-files'] : '[]');
+                    FileUpload::handleEditor((isset($v['blog-content'])) ? $v['blog-content'] : '');
                 }
+                Fileupload::handleFile(Request::input('blog-photo', '[]'));
+                Fileupload::handleFile(Request::input('blog-files', '[]'));
+                FileUpload::handleEditor(Request::input('blog-content', '[]'));
 
                 DB::commit();
 
@@ -204,6 +210,16 @@ class Blog
 
             DB::beginTransaction();
             try {
+
+                $dataRow_before = DB::table('blog')
+                    ->select([
+                        'blog.photo',
+                        'blog.files',
+                        'blog.content',
+                    ])
+                    ->where('id', Request::input('id'))
+                    ->where('use_sn',$param['use_sn'])
+                    ->first();
                 
                 DB::table('blog')
                     ->where('id', Request::input('id'))
@@ -222,6 +238,16 @@ class Blog
                         'update_admin_id' => Request::input('blog-update_admin_id', null),
                     ]);
                 foreach (Request::input('blog-lang', []) as $k => $v) {
+                    $dataRow_lang_before = DB::table('blog_lang')
+                        ->select([
+                            'blog_lang.photo',
+                            'blog_lang.files',
+                            'blog_lang.content',
+                        ])
+                        ->where('blog_id', Request::input('id'))
+                        ->where('lang', $k)
+                        ->first();
+
                     DB::table('blog_lang')
                         ->where('blog_id', Request::input('id'))
                         ->where('lang', $k)
@@ -235,7 +261,14 @@ class Blog
                             'files' => (isset($v['blog-files'])) ? $v['blog-files'] : '[]',
                             'update_admin_id' => Request::input('blog-update_admin_id', null),
                         ]);
+                    Fileupload::handleFile((isset($v['blog-photo'])) ? $v['blog-photo'] : '[]', isset($dataRow_lang_before->photo) ? $dataRow_lang_before->photo : []);
+                    Fileupload::handleFile((isset($v['blog-files'])) ? $v['blog-files'] : '[]', isset($dataRow_lang_before->files) ? $dataRow_lang_before->files : []);
+                    FileUpload::handleEditor((isset($v['blog-content'])) ? $v['blog-content'] : '', isset($dataRow_lang_before->content) ? $dataRow_lang_before->content : []);
                 }
+
+                Fileupload::handleFile(Request::input('blog-photo', '[]'), isset($dataRow_before->photo) ? $dataRow_before->photo : []);
+                Fileupload::handleFile(Request::input('blog-files', '[]'), isset($dataRow_before->files) ? $dataRow_before->files : []);
+                FileUpload::handleEditor(Request::input('blog-content', '[]'), isset($dataRow_before->content) ? $dataRow_before->content : []);
 
                 DB::commit();
 
@@ -301,12 +334,12 @@ class Blog
                 {
                     $dataSet_lang[$k]->photo_link = head(Fileupload::getFiles($v->photo));
                     $dataSet_lang[$k]->files_link = head(Fileupload::getFiles($v->files));
-                    $dataSet_lang[$k]->content = json_decode($v->content, true);
+                    $dataSet_lang[$k]->content_obj = json_decode($v->content, true);
                 }
                 $dataRow_blog->lang = $dataSet_lang;
                 $dataRow_blog->photo_link = head(Fileupload::getFiles($dataRow_blog->photo));
                 $dataRow_blog->files_link = head(Fileupload::getFiles($dataRow_blog->files));
-                $dataRow_blog->content = json_decode($dataRow_blog->content, true);
+                $dataRow_blog->content_obj = json_decode($dataRow_blog->content, true);
             }
         } catch (\PDOException $ex) {
             throw new PDOException($ex->getMessage());

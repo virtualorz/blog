@@ -77,8 +77,14 @@ $dataRow = Contact::detail($blog_id);
 
 #### 4. edit data to cate ####
 <pre><code>
-Contact::edit();
+Contact::edit($param = []);
 </code></pre>
+$param['app'] : use app def in config 
+
+
+$param['use_sn] : use_sn define your self for defferent system use
+
+
 with request variable name required : blog-cate_id,blog-title,blog-content
 
 #### 5. delete cate data ####
