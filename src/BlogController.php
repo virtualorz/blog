@@ -133,15 +133,17 @@ class Blog
                         'creat_admin_id' => Request::input('blog-creat_admin_id', null),
                         'update_admin_id' => Request::input('blog-update_admin_id', null),
                     ]);
-
-                foreach (Request::input('blog-tag', []) as $k => $v) {
-                    DB::table('blog_tag')
-                        ->insert([
-                            'blog_id' => $insert_id,
-                            'tag_id' => $v,
-                            'creat_admin_id' => Request::input('blog-creat_admin_id', null),
-                            'update_admin_id' => Request::input('blog-update_admin_id', null),
-                        ]);
+                if(Request::input('blog-tag', []) != '')
+                {
+                    foreach (Request::input('blog-tag', []) as $k => $v) {
+                        DB::table('blog_tag')
+                            ->insert([
+                                'blog_id' => $insert_id,
+                                'tag_id' => $v,
+                                'creat_admin_id' => Request::input('blog-creat_admin_id', null),
+                                'update_admin_id' => Request::input('blog-update_admin_id', null),
+                            ]);
+                    }
                 }
                 
                 foreach (Request::input('blog-lang', []) as $k => $v) {
@@ -247,25 +249,29 @@ class Blog
                         'enable' => Request::input('blog-enable'),
                         'update_admin_id' => Request::input('blog-update_admin_id', null),
                     ]);
-                DB::table('blog_tag')
-                    ->where('blog_id',Request::input('id'))
-                    ->whereNotIn('tag_id',Request::input('blog-tag', []))
-                    ->delete();
                 
-                foreach (Request::input('blog-tag', []) as $k => $v) {
-                    $dataCount = DB::table('blog_tag')
+                if(Request::input('blog-tag', []) != '')
+                {
+                    DB::table('blog_tag')
                         ->where('blog_id',Request::input('id'))
-                        ->where('tag_id',$v)
-                        ->count();
-                    if($dataCount == 0)
-                    {
-                        DB::table('blog_tag')
-                            ->insert([
-                                'blog_id' => Request::input('id'),
-                                'tag_id' => $v,
-                                'creat_admin_id' => Request::input('blog-creat_admin_id', null),
-                                'update_admin_id' => Request::input('blog-update_admin_id', null),
-                            ]);
+                        ->whereNotIn('tag_id',Request::input('blog-tag', []))
+                        ->delete();
+                
+                    foreach (Request::input('blog-tag', []) as $k => $v) {
+                        $dataCount = DB::table('blog_tag')
+                            ->where('blog_id',Request::input('id'))
+                            ->where('tag_id',$v)
+                            ->count();
+                        if($dataCount == 0)
+                        {
+                            DB::table('blog_tag')
+                                ->insert([
+                                    'blog_id' => Request::input('id'),
+                                    'tag_id' => $v,
+                                    'creat_admin_id' => Request::input('blog-creat_admin_id', null),
+                                    'update_admin_id' => Request::input('blog-update_admin_id', null),
+                                ]);
+                        }
                     }
                 }
 
